@@ -91,7 +91,7 @@ class ClipView extends React.Component {
     let vidStyle = this.state.showVideo ? {'zIndex': 2} : {};
     let video = this._videoMeta();
     let frame = this._frameMeta('start');
-    let path = `/server_media/thumbnails/tvnews/frame_${clip.start_frame}.jpg`;
+    let path = `/server_media/thumbnails/${window.DATASET}/frame_${clip.start_frame}.jpg`;
     /* let path = `https://frameserver-dot-visualdb-1046.appspot.com/?path=${encodeURIComponent(video.path)}&frame=${frame.number}&id=${clip.start_frame}`;*/
     return (
       <div className='search-result'

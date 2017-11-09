@@ -73,7 +73,8 @@ def extract_audio(video):
 
 
 def save_frames(video):
-    stride = int(math.ceil(video.fps)/2)
+    # stride = int(math.ceil(video.fps)/2)
+    stride = 1
     ids = [
         str(f['id'])
         for f in Frame.objects.filter(video=video, number__in=range(0, video.num_frames, stride))

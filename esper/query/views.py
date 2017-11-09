@@ -887,7 +887,8 @@ def search2(request):
     params = json.loads(request.body)
 
     m = ModelDelegator(params['dataset'])
-    Video, Frame, Face, FaceInstance, FaceFeatures, Labeler = m.Video, m.Frame, m.Face, m.FaceInstance, m.FaceFeatures, m.Labeler
+    # Video, Frame, Face, FaceInstance, FaceFeatures, Labeler = m.Video, m.Frame, m.Face, m.FaceInstance, m.FaceFeatures, m.Labeler
+    Video, Frame, Labeler = m.Video, m.Frame, m.Labeler
 
     def make_error(err):
         return JsonResponse({'error': err})

@@ -42,3 +42,14 @@ with base.Dataset('krishna'):
 
     class Person(base.Concept):
         pass
+
+with base.Dataset('trains'):
+
+    class Video(base.Video):
+        pass
+
+    class Frame(base.Frame):
+        pass
+
+    class Labeler(base.Labeler):
+        pass

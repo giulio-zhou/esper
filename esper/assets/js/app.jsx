@@ -27,7 +27,7 @@ export default class App extends React.Component {
   }
 
   render() {
-    if (this.state.valid) {
+    if (true) {
       return (
         <Router>
           <div>

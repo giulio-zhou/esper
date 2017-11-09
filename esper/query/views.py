@@ -36,6 +36,10 @@ DATA_PATH = os.environ.get('DATA_PATH')
 FALLBACK_ENABLED = False
 logger = logging.getLogger(__name__)
 
+from query.base_models import ModelDelegator
+model_delegator = ModelDelegator(DATASET)
+Video, Frame = model_delegator.Video, model_delegator.Frame
+
 # TODO(wcrichto): find a better way to do this
 Config()
 from scanner.types_pb2 import BoundingBox
@@ -59,7 +63,8 @@ def index(request):
             fields = cls._meta.get_fields()
             return [f.name for f in fields if isinstance(f, models.Field)]
 
-        for cls in ['Video', 'Frame', 'Labeler'] + sum([[c, c + 'Instance', c + 'Features']
+        #for cls in ['Video', 'Frame', 'Labeler'] + sum([[c, c + 'Instance', c + 'Features']
+        for cls in ['Video', 'Frame'] + sum([[c, c + 'Instance', c + 'Features']
                                                         for c in ds.concepts], []) + ds.other:
             schema.append([cls, get_fields(getattr(ds, cls))])
         schemas.append([name, schema])

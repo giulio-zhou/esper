@@ -92,22 +92,27 @@ def ingest(path, num_frames):
             local_path = path
 
         parts = os.path.splitext(os.path.split(path)[1])[0].split('_')
+        """
         [channel, date, time] = parts[:3]
         dt = datetime.strptime('{} {}'.format(date, time), '%Y%m%d %H%M%S')
         if channel[-1] == 'W':
             channel = channel[:-1]
         show = ' '.join(parts[3:-1])  # -1 for "_segment"
+        """
+        date = 20210120
+        time = 120000
+        dt = datetime.strptime('{} {}'.format(date, time), '%Y%m%d %H%M%S')
 
         video = Video()
         video.path = path
         video.num_frames = num_frames
-        video.fps = get_fps(local_path)
-        width, height = get_dimensions(local_path)
-        video.width = width
-        video.height = height
+        video.fps = 30 # get_fps(local_path)
+        # width, height = get_dimensions(local_path)
+        video.width = 300
+        video.height = 400
         video.time = dt
-        video.channel = channel
-        video.show = show
+        video.channel = 'trash'
+        video.show = 'garbage'
         video.save()
 
         frames = [Frame(number=i, video=video) for i in range(video.num_frames)]

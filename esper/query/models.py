@@ -53,3 +53,33 @@ with base.Dataset('trains'):
 
     class Labeler(base.Labeler):
         pass
+
+with base.Dataset('istcvcs'):
+
+    class Category(models.Model):
+        name = base.CharField()
+
+    class Presence(models.Model):
+        name = base.CharField()
+
+    class Label(models.Model):
+        category = models.ForeignKey(Category)
+        presence = models.ForeignKey(Presence)
+
+    class BoundingBox(models.Model):
+        category = models.ForeignKey(Category)
+        x_min = models.FloatField()
+        y_min = models.FloatField()
+        x_max = models.FloatField()
+        y_max = models.FloatField()
+        confidence = models.FloatField()
+
+    class Video(base.Video):
+        pass
+
+    class Frame(base.Frame):
+        labels = models.ManyToManyField(Label)
+        bounding_boxes = models.ManyToManyField(BoundingBox)
+
+    class Labeler(base.Labeler):
+        pass

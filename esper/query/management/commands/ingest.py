@@ -107,19 +107,17 @@ def ingest(path, num_frames):
         video = Video()
         video.path = path
         video.num_frames = num_frames
-        video.fps = 30 # get_fps(local_path)
-        # width, height = get_dimensions(local_path)
-        video.width = 300
-        video.height = 400
+        video.fps = get_fps(local_path)
+        width, height = get_dimensions(local_path)
+        video.width = width
+        video.height = height
         video.time = dt
-        video.channel = 'trash'
-        video.show = 'garbage'
         video.save()
 
         frames = [Frame(number=i, video=video) for i in range(video.num_frames)]
         Frame.objects.bulk_create(frames)
 
-        save_frames(video)
+        # save_frames(video)
 
         if ESPER_ENV == 'google':
             run('rm {}'.format(local_path))

@@ -78,7 +78,7 @@ WSGI_APPLICATION = 'esper.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'esper',
+        'NAME': 'postgres',
         'USER': os.environ.get('DJANGO_DB_USER'),
         'HOST': 'db',
     }

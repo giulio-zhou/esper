@@ -62,24 +62,25 @@ with base.Dataset('istcvcs'):
     class Presence(models.Model):
         name = base.CharField()
 
+    class Video(base.Video):
+        pass
+
+    class Frame(base.Frame):
+        pass
+
     class Label(models.Model):
+        frame = models.ForeignKey(Frame)
         category = models.ForeignKey(Category)
         presence = models.ForeignKey(Presence)
 
     class BoundingBox(models.Model):
+        frame = models.ForeignKey(Frame)
         category = models.ForeignKey(Category)
         x_min = models.FloatField()
         y_min = models.FloatField()
         x_max = models.FloatField()
         y_max = models.FloatField()
         confidence = models.FloatField()
-
-    class Video(base.Video):
-        pass
-
-    class Frame(base.Frame):
-        labels = models.ManyToManyField(Label)
-        bounding_boxes = models.ManyToManyField(BoundingBox)
 
     class Labeler(base.Labeler):
         pass

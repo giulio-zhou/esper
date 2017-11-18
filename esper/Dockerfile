@@ -1,4 +1,4 @@
-FROM scannerresearch/scanner:gpu
+FROM scannerresearch/scanner:cpu
 ARG https_proxy
 ENV DJANGO_CONFIGURATION Docker
 ENV https_proxy=$https_proxy
@@ -8,19 +8,10 @@ ENV TERM=xterm
 # Need sudo so Torch can install
 RUN apt-get update && apt-get install -y sudo
 
-# Torch
-# Have to run this in bash for the torch bashrc settings to get propagated
-RUN git clone https://github.com/torch/distro.git /opt/torch --recursive && \
-    cd /opt/torch && bash install-deps && ./install.sh -b && \
-    . /opt/torch/install/bin/torch-activate && \
-    for NAME in torch dpnn nn optim optnet csvigo cutorch cunn fblualib torchx tds; \
-        do luarocks install $NAME; \
-    done
-
 # Misc apt dependencies
 RUN apt-get update && \
     apt-get install -y postgresql libpq-dev cron python-tk sqlite3 \
-    npm nodejs && \
+    npm nodejs curl && \
     ln -s /usr/bin/nodejs /usr/bin/node
 
 # Google Cloud SDK
@@ -44,7 +35,7 @@ ENV GLOG_minloglevel=1
 # TODO(wcrichto): don't run this if running without --cloud-files
 ADD visualdb-key.json .
 ENV GOOGLE_APPLICATION_CREDENTIALS=${APPDIR}/visualdb-key.json
-RUN gcloud config set project visualdb-1046 && \
+RUN gcloud config set project istc-vcs-esper && \
     gcloud auth activate-service-account --key-file=$GOOGLE_APPLICATION_CREDENTIALS
 
 CMD cp .scanner.toml /root/ && gunicorn --log-file=- -c gunicorn_conf.py esper.wsgi:application --reload

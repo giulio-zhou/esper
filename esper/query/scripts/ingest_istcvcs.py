@@ -3,7 +3,7 @@ from django.db import transaction
 from django.db.models import Max
 from operator import itemgetter
 from query.models import Category, Presence
-from query.models import Video, Frame, Label
+from query.models import Video, Frame, Label, BoundingBox
 from query.scripts.read_data import main
 import sys
 import time
@@ -83,6 +83,43 @@ def make_presence_labels(video_path, full_labels, category_name):
         new_labels.append(label_object)
         new_frames.append(current_frame)
     return new_labels, new_frames
+
+def make_bounding_boxes(video_path, labels_path):
+    ext = os.path.splitext(labels_path)[1]
+    if ext == '.csv':
+        csv_data = pd.read_csv(labels_path)
+        columns = np.array(csv_data.columns)
+        def row_iterator(csv_data):
+            csv_iter = csv_data.itertuples()
+            for row in csv_iter:
+                yield np.array(row)
+        row_iter = row_iterator(csv_data)
+    elif ext == '.npy':
+        npy_data = np.load(labels_path)
+        columns = npy_data[0]
+        row_iter = np.nditer(npy_data[1:])
+    else:
+        raise Exception("Invalid label file %s" % labels_path)
+    assert columns[0] == 'frame'
+    assert columns[1] == 'object_name'
+    assert columns[2] == 'confidence'
+    assert columns[3] == 'xmin' and columns[4] == 'ymin'
+    assert columns[4] == 'xmax' and columns[5] == 'ymax'
+
+    frame_dict = {frame.name: frame for frame in \
+                      Frame.objects.filter(video__path=video_path)}
+    category_dict = \
+        {category.name: category for category in Category.objects.all()}
+    # Create matching bounding box objects.
+    bounding_boxes = []
+    for row in row_iter:
+        frame_id, object_name, conf, xmin, ymin, xmax, ymax = row
+        frame_obj = frame_dict[frame_id]
+        category_obj = category_dict[object_name]
+        bb = BoundingBox(frame=frame_obj, category=category_obj, x_min=xmin,
+                         y_min=ymin, x_min=xmax, y_max=ymax, confidence=conf)
+        bounding_boxes.append(bb)
+    return bounding_boxes
 
 def batch_save_frames(new_frames):
     num_frames = len(new_frames)

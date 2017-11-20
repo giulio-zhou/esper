@@ -5,18 +5,23 @@ from operator import itemgetter
 from query.models import Category, Presence
 from query.models import Video, Frame, Label, BoundingBox
 from query.scripts.read_data import main
+import numpy as np
+import os
+import pandas as pd
 import sys
 import time
 
-MODE = 'new_presence_labels'
+MODE = 'new_bounding_boxes'
 
 VIDEO_PATH = 'videos/jackson-town-square.mp4'
 DATA_DIR = 'labeler/noscope-jackson'
 CATEGORY = 'person'
+LABELS_PATH = 'jackson-town-square.csv'
 
 NEW_VIDEO_ARGS = [VIDEO_PATH, 6426648, 30, 601, 400]
 NEW_PRESENCE_LABELS_ARGS = [VIDEO_PATH, DATA_DIR, CATEGORY]
 UPDATE_PRESENCE_LABELS_ARGS = [VIDEO_PATH, DATA_DIR, CATEGORY]
+NEW_BOUNDING_BOXES_ARGS = [VIDEO_PATH, LABELS_PATH]
 
 def make_video_object(path, num_frames, fps, width, height):
     video = Video()
@@ -84,6 +89,11 @@ def make_presence_labels(video_path, full_labels, category_name):
         new_frames.append(current_frame)
     return new_labels, new_frames
 
+def create_categories_if_nonexistent(category_names):
+    for category_name in category_names:
+        if len(Category.objects.filter(name=category_name)) == 0:
+            Category(name=category_name).save()
+
 def make_bounding_boxes(video_path, labels_path):
     ext = os.path.splitext(labels_path)[1]
     if ext == '.csv':
@@ -94,30 +104,38 @@ def make_bounding_boxes(video_path, labels_path):
             for row in csv_iter:
                 yield np.array(row)
         row_iter = row_iterator(csv_data)
+        unique_categories = np.unique(csv_data['object_name'])
     elif ext == '.npy':
         npy_data = np.load(labels_path)
         columns = npy_data[0]
         row_iter = np.nditer(npy_data[1:])
+        unique_categories = np.unique(npy_data[1:, 1])
     else:
         raise Exception("Invalid label file %s" % labels_path)
     assert columns[0] == 'frame'
     assert columns[1] == 'object_name'
     assert columns[2] == 'confidence'
     assert columns[3] == 'xmin' and columns[4] == 'ymin'
-    assert columns[4] == 'xmax' and columns[5] == 'ymax'
+    assert columns[5] == 'xmax' and columns[6] == 'ymax'
 
-    frame_dict = {frame.name: frame for frame in \
+    # Optionally create categories that don't already exist.
+    print(unique_categories)
+    create_categories_if_nonexistent(unique_categories)
+
+    frame_dict = {frame.number: frame for frame in \
                       Frame.objects.filter(video__path=video_path)}
     category_dict = \
         {category.name: category for category in Category.objects.all()}
     # Create matching bounding box objects.
     bounding_boxes = []
     for row in row_iter:
-        frame_id, object_name, conf, xmin, ymin, xmax, ymax = row
+        frame_id, object_name, conf = int(row[1]), row[2], float(row[3])
+        xmin, ymin = float(row[4]), float(row[5])
+        xmax, ymax = float(row[6]), float(row[7])
         frame_obj = frame_dict[frame_id]
         category_obj = category_dict[object_name]
         bb = BoundingBox(frame=frame_obj, category=category_obj, x_min=xmin,
-                         y_min=ymin, x_min=xmax, y_max=ymax, confidence=conf)
+                         y_min=ymin, x_max=xmax, y_max=ymax, confidence=conf)
         bounding_boxes.append(bb)
     return bounding_boxes
 
@@ -137,6 +155,14 @@ def batch_save_presence_labels(new_labels, new_frames):
         new_labels_batch = itemgetter(*x)(new_labels)
         new_frames_batch = itemgetter(*x)(new_frames)
         Label.objects.bulk_create(new_labels_batch)
+
+def batch_save_bounding_boxes(new_bounding_boxes):
+    num_bboxes = len(new_bounding_boxes)
+    batch_size = 1000
+    for i, x in enumerate(batch(range(0, num_bboxes), batch_size)):
+        print "Batch:", i
+        new_bboxes_batch = itemgetter(*x)(new_bounding_boxes)
+        BoundingBox.objects.bulk_create(new_bboxes_batch)
 
 def batch_update_presence_labels(new_labels, new_frames, category_name):
     num_frames = len(new_frames)
@@ -172,5 +198,9 @@ elif mode == 'update_presence_labels':
     new_labels, new_frames = \
         make_presence_labels(video_path, full_labels, category_name)
     batch_update_presence_labels(new_labels, new_frames, category_name)
+elif mode == 'new_bounding_boxes':
+    video_path, labels_path = NEW_BOUNDING_BOXES_ARGS
+    bounding_boxes = make_bounding_boxes(video_path, labels_path)
+    batch_save_bounding_boxes(bounding_boxes)
 else:
     raise Exception("Cannot find matching mode for mode %s" % mode)

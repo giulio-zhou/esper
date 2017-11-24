@@ -56,6 +56,9 @@ with base.Dataset('trains'):
 
 with base.Dataset('istcvcs'):
 
+    class LabelSource(models.Model):
+        name = base.CharField()
+
     class Category(models.Model):
         name = base.CharField()
 
@@ -70,11 +73,13 @@ with base.Dataset('istcvcs'):
 
     class Label(models.Model):
         frame = models.ForeignKey(Frame)
+        source = models.ForeignKey(LabelSource)
         category = models.ForeignKey(Category)
         presence = models.ForeignKey(Presence)
 
     class BoundingBox(models.Model):
         frame = models.ForeignKey(Frame)
+        source = models.ForeignKey(LabelSource)
         category = models.ForeignKey(Category)
         x_min = models.FloatField()
         y_min = models.FloatField()

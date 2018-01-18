@@ -17,7 +17,8 @@ Presence.objects.bulk_create(presence_objects)
 existing_label_source_names = \
     list(LabelSource.objects.values_list('name', flat=True))
 print(existing_label_source_names)
-label_sources = ['NoScope YOLO', 'Viscloud Labeler', 'Viscloud YOLOv2 416']
+label_sources = ['NoScope YOLO', 'Viscloud Labeler', 'Viscloud YOLOv2 416',
+                 'Viscloud YOLOv2 1024']
 label_sources_objects = \
     [LabelSource(name=label_source_str) for label_source_str in label_sources
          if label_source_str not in existing_label_source_names]

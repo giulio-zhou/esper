@@ -19,7 +19,8 @@ CATEGORY = 'person'
 LABELS_PATH = 'jackson-town-square.csv'
 
 LABELS_SOURCE = 'Viscloud Labeler'
-BBOX_SOURCE = 'NoScope YOLO'
+# BBOX_SOURCE = 'NoScope YOLO'
+BBOX_SOURCE = 'Viscloud YOLOv2 416'
 
 NEW_VIDEO_ARGS = [VIDEO_PATH, 6426648, 30, 601, 400]
 NEW_PRESENCE_LABELS_ARGS = [VIDEO_PATH, DATA_DIR, CATEGORY, LABELS_SOURCE]
@@ -112,11 +113,14 @@ def make_bounding_boxes(video_path, labels_path, source):
     elif ext == '.npy':
         npy_data = np.load(labels_path)
         columns = npy_data[0]
-        row_iter = np.nditer(npy_data[1:])
+        def row_iterator(np_array):
+            for i, row in enumerate(np_array):
+                yield np.array([i] + list(row))
+        row_iter = row_iterator(npy_data[1:])
         unique_categories = np.unique(npy_data[1:, 1])
     else:
         raise Exception("Invalid label file %s" % labels_path)
-    assert columns[0] == 'frame'
+    assert columns[0] == 'frame_no'
     assert columns[1] == 'object_name'
     assert columns[2] == 'confidence'
     assert columns[3] == 'xmin' and columns[4] == 'ymin'
